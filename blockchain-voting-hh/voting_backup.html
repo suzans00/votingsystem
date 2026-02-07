@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voting DApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+</head>
+<body>
+  <h1>Voting DApp</h1>
+
+  <button id="voteButton">Vote for Alice</button>
+
+  <p id="status"></p>
+
+  <script type="text/javascript">
+    const contractAddress = "0x5fbdb2315678afecb367f032d93f642f64180aa3"; // your deployed contract
+
+    // copy the ABI from artifacts/contracts/Voting.sol/Voting.json
+    const contractABI = [
+      {
+        "inputs":[{"internalType":"string","name":"_name","type":"string"}],
+        "stateMutability":"nonpayable","type":"constructor"
+      },
+      {
+        "anonymous":false,
+        "inputs":[{"indexed":false,"internalType":"uint256","name":"candidateId","type":"uint256"}],
+        "name":"Voted",
+        "type":"event"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"","type":"uint256"}],
+        "name":"candidates",
+        "outputs":[
+          {"internalType":"uint256","name":"id","type":"uint256"},
+          {"internalType":"string","name":"name","type":"string"},
+          {"internalType":"uint256","name":"voteCount","type":"uint256"}
+        ],
+        "stateMutability":"view",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"_candidateId","type":"uint256"}],
+        "name":"vote",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      }
+    ];
+
+    async function connectAndVote() {
+      if (!window.ethereum) {
+        alert("Please install MetaMask!");
+        return;
+      }
+
+      await ethereum.request({ method: 'eth_requestAccounts' });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const voting = new ethers.Contract(contractAddress, contractABI, signer);
+
+      // Vote for candidate 1 (Alice)
+      const tx = await voting.vote(1);
+      await tx.wait();
+
+      document.getElementById("status").innerText = "Voted successfully!";
+    }
+
+    document.getElementById("voteButton").addEventListener("click", connectAndVote);
+  </script>
+</body>
+</html>
+

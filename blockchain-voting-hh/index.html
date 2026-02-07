@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blockchain Voting System</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 40px;
+    font-size: 1.1rem;
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    margin: 15px 0;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% { transform: scale(0, 0); opacity: 0.5; }
+    100% { transform: scale(20, 20); opacity: 0; }
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+    color: white;
+}
+
+.primary-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+}
+
+.admin-btn {
+    background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);
+    color: white;
+}
+
+.admin-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(33, 150, 243, 0.3);
+}
+
+.voter-btn {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+}
+
+.voter-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3);
+}
+
+.btn:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.status-box {
+    margin: 30px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-left: 5px solid #2196F3;
+    text-align: left;
+}
+
+.status-box h3 {
+    color: #333;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-box h3::before {
+    content: "⚡";
+}
+
+.connected-info {
+    background: #e8f5e8;
+    border-left-color: #4CAF50;
+}
+
+.warning-info {
+    background: #fff3e0;
+    border-left-color: #FF9800;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.info-item {
+    padding: 8px;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.info-label {
+    color: #666;
+    font-weight: 600;
+    display: block;
+}
+
+.info-value {
+    color: #333;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.network-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #e3f2fd;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.network-indicator::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #4CAF50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.hidden {
+    display: none;
+}
+
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: " ⏳";
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🗳️ Blockchain Voting</h1>
+    <p class="subtitle">Secure, Transparent, Decentralized Voting System</p>
+    
+    <button id="connectBtn" class="btn primary-btn">
+        🔗 Connect MetaMask Wallet
+    </button>
+    
+    <div id="statusSection" class="status-box hidden">
+        <h3 id="statusTitle">Connection Status</h3>
+        <div id="statusContent">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Account</span>
+                    <span id="accountInfo" class="info-value">Not connected</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Network</span>
+                    <span id="networkInfo" class="info-value">Unknown</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Balance</span>
+                    <span id="balanceInfo" class="info-value">0 ETH</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Role</span>
+                    <span id="roleInfo" class="info-value">Unknown</span>
+                </div>
+            </div>
+            <div class="network-indicator" id="networkIndicator">
+                Connected to Localhost
+            </div>
+        </div>
+    </div>
+    
+    <button id="voterBtn" class="btn voter-btn" disabled>
+        👥 Go to Voting Page
+    </button>
+    
+    <button id="adminBtn" class="btn admin-btn" disabled>
+        ⚙️ Go to Admin Panel
+    </button>
+    
+    <div style="margin-top: 30px; color: #666; font-size: 0.9rem;">
+        <p>📍 Contract: <code id="contractAddress">0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</code></p>
+        <p>🔗 Running on: Hardhat Localhost (8545)</p>
+    </div>
+</div>
+
+<script>
+// Configuration
+const CONFIG = {
+    ADMIN_ADDRESS: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    CONTRACT_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    NETWORK: {
+        chainId: "0x7A69", // 31337
+        chainName: "Hardhat Localhost",
+        rpcUrl: "http://127.0.0.1:8545/"
+    }
+};
+
+// State
+let userState = {
+    account: null,
+    balance: "0",
+    isAdmin: false,
+    network: null
+};
+
+// DOM Elements
+const connectBtn = document.getElementById('connectBtn');
+const voterBtn = document.getElementById('voterBtn');
+const adminBtn = document.getElementById('adminBtn');
+const statusSection = document.getElementById('statusSection');
+const accountInfo = document.getElementById('accountInfo');
+const networkInfo = document.getElementById('networkInfo');
+const balanceInfo = document.getElementById('balanceInfo');
+const roleInfo = document.getElementById('roleInfo');
+const networkIndicator = document.getElementById('networkIndicator');
+
+// Format address for display
+function formatAddress(address) {
+    if (!address) return "Not connected";
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+}
+
+// Format ETH balance
+function formatBalance(balanceWei) {
+    const balanceEth = parseInt(balanceWei) / 1e18;
+    return `${balanceEth.toFixed(4)} ETH`;
+}
+
+// Update UI with current state
+function updateUI() {
+    if (userState.account) {
+        // Update status display
+        accountInfo.textContent = formatAddress(userState.account);
+        networkInfo.textContent = userState.network || "Unknown";
+        balanceInfo.textContent = formatBalance(userState.balance);
+        roleInfo.textContent = userState.isAdmin ? "👑 Admin" : "👤 Voter";
+        roleInfo.style.color = userState.isAdmin ? "#2196F3" : "#4CAF50";
+        
+        // Enable appropriate buttons
+        voterBtn.disabled = false;
+        adminBtn.disabled = !userState.isAdmin;
+        
+        // Show status section
+        statusSection.classList.remove('hidden');
+        statusSection.classList.add('connected-info');
+        
+        // Update connect button
+        connectBtn.innerHTML = "✅ Wallet Connected";
+        connectBtn.classList.add('connected-info');
+        
+    } else {
+        // Reset UI
+        statusSection.classList.add('hidden');
+        voterBtn.disabled = true;
+        adminBtn.disabled = true;
+        connectBtn.innerHTML = "🔗 Connect MetaMask Wallet";
+        connectBtn.classList.remove('connected-info');
+    }
+}
+
+// Switch to localhost network
+async function switchToLocalhost() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: CONFIG.NETWORK.chainId }]
+        });
+        return true;
+    } catch (switchError) {
+        if (switchError.code === 4902) {
+            // Network not added, add it
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: CONFIG.NETWORK.chainId,
+                        chainName: CONFIG.NETWORK.chainName,
+                        rpcUrls: [CONFIG.NETWORK.rpcUrl],
+                        nativeCurrency: {
+                            name: "ETH",
+                            symbol: "ETH",
+                            decimals: 18
+                        }
+                    }]
+                });
+                return true;
+            } catch (addError) {
+                console.error("Failed to add network:", addError);
+                return false;
+            }
+        }
+        console.error("Failed to switch network:", switchError);
+        return false;
+    }
+}
+
+// Get account balance
+async function getBalance(address) {
+    try {
+        const balance = await window.ethereum.request({
+            method: 'eth_getBalance',
+            params: [address, 'latest']
+        });
+        return balance;
+    } catch (error) {
+        console.error("Failed to get balance:", error);
+        return "0";
+    }
+}
+
+// Get current network
+async function getNetwork() {
+    try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        return chainId === CONFIG.NETWORK.chainId ? "Localhost" : `Unknown (${chainId})`;
+    } catch (error) {
+        return "Unknown";
+    }
+}
+
+// Main connection function
+async function connectWallet() {
+    if (!window.ethereum) {
+        alert("❌ MetaMask not detected!\nPlease install MetaMask to continue.");
+        return;
+    }
+    
+    try {
+        // Show loading state
+        connectBtn.classList.add('loading');
+        connectBtn.innerHTML = "🔄 Connecting...";
+        
+        // Request accounts
+        const accounts = await window.ethereum.request({
+            method: 'eth_requestAccounts'
+        });
+        
+        if (!accounts || accounts.length === 0) {
+            throw new Error("No accounts found");
+        }
+        
+        // Switch to localhost
+        const networkSwitched = await switchToLocalhost();
+        if (!networkSwitched) {
+            throw new Error("Failed to switch to localhost network");
+        }
+        
+        // Get account info
+        const account = accounts[0];
+        const balance = await getBalance(account);
+        const network = await getNetwork();
+        const isAdmin = account.toLowerCase() === CONFIG.ADMIN_ADDRESS.toLowerCase();
+        
+        // Update state
+        userState = { account, balance, isAdmin, network };
+        
+        // Update UI
+        updateUI();
+        
+        console.log("✅ Connected:", userState);
+        
+    } catch (error) {
+        console.error("Connection error:", error);
+        alert(`❌ Connection failed:\n${error.message}`);
+        
+        // Reset UI
+        connectBtn.classList.remove('loading');
+        connectBtn.innerHTML = "🔗 Connect MetaMask Wallet";
+    }
+}
+
+// Check if already connected on page load
+async function checkExistingConnection() {
+    if (!window.ethereum) return;
+    
+    try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts && accounts.length > 0) {
+            // Already connected, update state
+            const account = accounts[0];
+            const balance = await getBalance(account);
+            const network = await getNetwork();
+            const isAdmin = account.toLowerCase() === CONFIG.ADMIN_ADDRESS.toLowerCase();
+            
+            userState = { account, balance, isAdmin, network };
+            updateUI();
+        }
+    } catch (error) {
+        console.log("No existing connection:", error);
+    }
+}
+
+// Event Listeners
+connectBtn.addEventListener('click', connectWallet);
+voterBtn.addEventListener('click', () => {
+    window.location.href = "voting.html";
+});
+adminBtn.addEventListener('click', () => {
+    window.location.href = "admin.html";
+});
+
+// MetaMask event listeners
+if (window.ethereum) {
+    // Account changed
+    window.ethereum.on('accountsChanged', async (accounts) => {
+        if (accounts && accounts.length > 0) {
+            const account = accounts[0];
+            const balance = await getBalance(account);
+            const network = await getNetwork();
+            const isAdmin = account.toLowerCase() === CONFIG.ADMIN_ADDRESS.toLowerCase();
+            
+            userState = { account, balance, isAdmin, network };
+            updateUI();
+            
+            alert("🔄 Account changed!");
+        } else {
+            // User disconnected
+            userState = { account: null, balance: "0", isAdmin: false, network: null };
+            updateUI();
+        }
+    });
+    
+    // Network changed
+    window.ethereum.on('chainChanged', () => {
+        window.location.reload();
+    });
+}
+
+// Initialize
+window.addEventListener('load', async () => {
+    await checkExistingConnection();
+    
+    // Update contract address display
+    document.getElementById('contractAddress').textContent = 
+        `${CONFIG.CONTRACT_ADDRESS.substring(0, 10)}...${CONFIG.CONTRACT_ADDRESS.substring(CONFIG.CONTRACT_ADDRESS.length - 8)}`;
+});
+</script>
+</body>
+</html>
