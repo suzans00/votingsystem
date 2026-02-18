@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Contract</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>Test Contract Connection</h1>
+    <button onclick="test()">Test Contract</button>
+    <div id="output" style="margin-top: 20px; white-space: pre-wrap;"></div>
+
+    <script>
+        async function test() {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Connecting...';
+            
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    output.innerHTML = '❌ MetaMask not installed!';
+                    return;
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const web3 = new Web3(window.ethereum);
+                
+                const contractAddress = "0xcbEAF3BDe82155F56486Fb5a1072cb8baAf547cc";
+                
+                const abi = [
+                    {
+                        "inputs": [],
+                        "name": "candidatesCount",
+                        "outputs": [{"name": "", "type": "uint256"}],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [{"name": "", "type": "uint256"}],
+                        "name": "candidates",
+                        "outputs": [
+                            {"name": "id", "type": "uint256"},
+                            {"name": "name", "type": "string"},
+                            {"name": "voteCount", "type": "uint256"},
+                            {"name": "manifesto", "type": "string"},
+                            {"name": "candidateAddress", "type": "address"}
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    }
+                ];
+
+                const contract = new web3.eth.Contract(abi, contractAddress);
+                
+                const count = await contract.methods.candidatesCount().call();
+                output.innerHTML += `✅ Contract connected!\n`;
+                output.innerHTML += `📊 Candidates count: ${count}\n\n`;
+                
+                for (let i = 1; i <= count; i++) {
+                    const c = await contract.methods.candidates(i).call();
+                    output.innerHTML += `Candidate ${i}:\n`;
+                    output.innerHTML += `  Name: ${c.name}\n`;
+                    output.innerHTML += `  Votes: ${c.voteCount}\n`;
+                    output.innerHTML += `  Manifesto: ${c.manifesto || 'None'}\n\n`;
+                }
+                
+            } catch (error) {
+                output.innerHTML += `❌ Error: ${error.message}\n`;
+            }
+        }
+    </script>
+</body>
+</html>
